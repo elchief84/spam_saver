@@ -104,6 +104,18 @@ String _coreKey(String digits) {
   return d;
 }
 
+/// Chiave canonica per lookup liste/rubrica: collassa i formati
+/// equivalenti (prefisso paese 39/0039/+, trunk nazionale 0,
+/// separatori) nello stesso nucleo. Se non resta alcun nucleo
+/// numerico (es. sender alfanumerici), ricade sulla forma
+/// normalizzata cosi' voci distinte non collidono mai.
+String canonicalNumberKey(String rawNumber) {
+  final normalized = normalizeNumber(rawNumber);
+  final core = _coreKey(_digitsOnly(normalized));
+  if (core.isEmpty) return normalized;
+  return core;
+}
+
 /// Due stringhe indicano lo stesso numero se i nuclei coincidono
 /// dopo rimozione prefisso paese 39/0039 e trunk nazionale 0.
 bool isSameNumber(String a, String b) {

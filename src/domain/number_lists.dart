@@ -28,7 +28,7 @@ class NumberLists {
     this.blacklist = const {},
   });
 
-  static String _key(String rawNumber) => normalizeNumber(rawNumber);
+  static String _key(String rawNumber) => canonicalNumberKey(rawNumber);
 
   Map<String, ManagedEntry> _side(ManagedList list) =>
       list == ManagedList.whitelist ? whitelist : blacklist;

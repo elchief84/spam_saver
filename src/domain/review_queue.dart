@@ -7,6 +7,7 @@
 // Immutabile: ogni operazione restituisce una nuova [ReviewQueue].
 // Funzioni totali: mai throw.
 
+import 'phone_number.dart';
 import 'screening_decision.dart';
 
 /// Voce in attesa di classificazione con link al registro.
@@ -56,4 +57,29 @@ class ReviewQueue {
       ),
     ]);
   }
+
+  /// Rimuove le pendenze del numero (formati equivalenti collassati
+  /// via chiave canonica). Restituisce una nuova coda; se nulla
+  /// corrisponde restituisce la stessa coda invariata. Totale.
+  ReviewQueue resolve(String rawNumber) {
+    if (rawNumber.trim().isEmpty) return this;
+    final key = canonicalNumberKey(rawNumber);
+    final next =
+        pending.where((e) => canonicalNumberKey(e.numberKey) != key).toList();
+    if (next.length == pending.length) return this;
+    return ReviewQueue(next);
+  }
+
+  /// Alias di [resolve] per CRUD di coda.
+  ReviewQueue remove(String rawNumber) => resolve(rawNumber);
+
+  /// Svuota la coda. Totale.
+  ReviewQueue clear() => const ReviewQueue();
+
+  /// Prima voce in attesa, o null se vuota. Totale.
+  PendingReview? takeNext() => pending.isEmpty ? null : pending.first;
+
+  /// Rimuove la prima voce. Coda vuota invariata. Totale.
+  ReviewQueue popFirst() =>
+      pending.isEmpty ? this : ReviewQueue(pending.sublist(1));
 }
