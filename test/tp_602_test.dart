@@ -3,7 +3,6 @@
 import 'dart:io';
 import '../src/domain/phone_number.dart';
 import '../src/domain/review_actions.dart';
-import '../src/domain/review_queue.dart';
 import '../src/domain/screening_decision.dart';
 
 void _fail(String msg) {
