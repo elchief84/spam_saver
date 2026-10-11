@@ -126,3 +126,48 @@ ScreeningVerdict decideScreeningParams({
     ),
   );
 }
+
+/// Verdetto fail-open costante per revoca ruolo: passa con squillo,
+/// origine noRole. Sincrono, totale, mai throw, senza I/O: non stalla.
+const ScreeningVerdict roleRevokedFailOpenVerdict = ScreeningVerdict(
+  action: ScreeningAction.pass,
+  origin: DecisionOrigin.noRole,
+  actuation: ScreeningActuation.ring,
+);
+
+/// True se [verdict] e' il fail-open atteso dopo revoca ruolo
+/// (pass/ring con origine noRole, mai disconnect ne' silenceFallback).
+bool isRoleRevokedFailOpen(ScreeningVerdict verdict) =>
+    verdict.action == ScreeningAction.pass &&
+    verdict.origin == DecisionOrigin.noRole &&
+    verdict.actuation == ScreeningActuation.ring;
+
+/// Rivalutazione a caldo del ruolo: se [roleNowHeld] e' false la revoca
+/// prevale su tutto e restituisce subito il fail-open (pass/ring/noRole)
+/// senza I/O ne' attese, quindi senza stallo; se true rivaluta [facts]
+/// con ruolo detenuto. Sincrona e totale: mai throw.
+ScreeningVerdict reevaluateOnRoleChange(
+  ScreeningFacts facts,
+  bool roleNowHeld,
+) {
+  if (!roleNowHeld) return roleRevokedFailOpenVerdict;
+  return decideScreening(ScreeningFacts(
+    visibility: facts.visibility,
+    inContacts: facts.inContacts,
+    inWhitelist: facts.inWhitelist,
+    inBlacklist: facts.inBlacklist,
+    roleHeld: true,
+  ));
+}
+
+/// Alias per revoca ruolo a caldo (fail-open senza stallo).
+ScreeningVerdict decideOnRoleRevoked(ScreeningFacts facts) =>
+    reevaluateOnRoleChange(facts, false);
+
+/// Alias per revoca ruolo a caldo (fail-open senza stallo).
+ScreeningVerdict handleHotRoleRevocation(ScreeningFacts facts) =>
+    reevaluateOnRoleChange(facts, false);
+
+/// Alias per rivalutazione ruolo a caldo.
+ScreeningVerdict applyRoleChange(ScreeningFacts facts, bool roleNowHeld) =>
+    reevaluateOnRoleChange(facts, roleNowHeld);
