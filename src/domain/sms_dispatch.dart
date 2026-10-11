@@ -21,6 +21,9 @@ enum SmsSendOutcome {
 
   /// event_id gia' visto: nessun secondo invio, sender mai chiamato.
   duplicateSuppressed,
+
+  /// Esito piattaforma negativo (es. NO_SERVICE): nessun invio riuscito.
+  failed,
 }
 
 /// Evento di invio con chiave di idempotenza.
