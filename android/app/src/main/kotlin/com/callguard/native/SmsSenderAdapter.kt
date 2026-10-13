@@ -35,7 +35,7 @@ object SmsSenderAdapter {
                 sms.sendTextMessage(destination, null, body, sentIntent, null)
             } else {
                 val parts = sms.divideMessage(body)
-                val intents = parts.map { sentIntent }
+                val intents = ArrayList(parts.map { sentIntent })
                 sms.sendMultipartTextMessage(destination, null, parts, intents, null)
             }
             "sent"

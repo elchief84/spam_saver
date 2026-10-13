@@ -11,7 +11,7 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 
 /**
- * SU-INF-06-01 — MethodChannel `call_guard/bridge_v1`, 15 metodi `cg/v1/*`.
+ * SU-INF-06-01 — MethodChannel `call_guard/bridge_v1`, 15 metodi `cg/v1/...`.
  * Ogni handler: parse tipizzato -> normalizza via PhoneNumbers (mai
  * trust forma Dart) -> use case/store -> serializza §6.3 -> mappa errori
  * a envelope {code,message,action}, mai stack/PII. classify/manage/retry
