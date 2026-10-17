@@ -1,0 +1,4 @@
+<resources>
+    <!-- Tema di piattaforma, senza action bar: alla Compose pensa il codice. -->
+    <style name="Theme.SpamSaver" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>
