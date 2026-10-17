@@ -1,0 +1,7 @@
+# Spam Saver è il gestore SMS predefinito del telefono
+
+Il flusso voluto è *«rifiuta lo sconosciuto, chiedigli chi è, mostrami la risposta»*: servono l'invio automatico di un SMS e la lettura della risposta. Android consegna gli SMS in arrivo (`SMS_DELIVER`) e il diritto di scriverli nel database di sistema **solo** al gestore SMS predefinito, e Google Play concede i permessi SMS soltanto ad app registrate come gestore predefinito (o a poche eccezioni dichiarate).
+
+Abbiamo deciso che Spam Saver chiede all'utente, in onboarding, i due ruoli di sistema — **gestore SMS predefinito** e **screening delle chiamate** («Caller ID & spam») — e che accetta la conseguenza: diventa anche il client SMS del telefono, quindi riceve, scrive e notifica i messaggi, con thread, archiviazione e risposte rapide. L'ordine è imposto da Play: prima il ruolo, poi i permessi che ne dipendono. Possibile solo da **Android 10 (API 29)**, perché prima i ruoli di sistema non esistono.
+
+Considerato e scartato: **niente SMS, solo rifiuto** — il cuore del prodotto è chiedere chi è, e senza SMS resta un filtro come tanti; **SMS inviato a mano** (l'app apre il composer precompilato) — nessun permesso SMS e nessun obbligo Play, ma richiede un tocco dell'utente e non è il flusso voluto; **far leggere le risposte da un'altra app** — impossibile con le regole di Play, solo il gestore predefinito legge gli SMS; **distribuzione fuori dal Play Store** — evita le dichiarazioni, ma l'app resta con un client SMS che scrive messaggi che l'utente non vede nella sua app di messaggi.

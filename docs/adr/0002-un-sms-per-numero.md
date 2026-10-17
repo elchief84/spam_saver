@@ -1,0 +1,7 @@
+# Un SMS di identificazione per numero, per sempre
+
+L'SMS di identificazione costa: lo paga chi installa l'app. E il destinatario è, per definizione, un numero che non conosciamo: spesso un call center, un servizio automatico o un numero **spoofato** — cioè qualcuno che non leggerà, e in certi casi una persona innocente che non c'entra nulla. Ogni messaggio in più è quindi soldi spesi e un messaggio non richiesto a chi non lo ha chiesto.
+
+Abbiamo deciso che l'app manda **un solo** SMS di identificazione a un numero, e mai più: il numero resta «interrogato» anche se non risponde, anche se richiama dieci volte, anche dopo un riavvio dell'app. In più due protezioni sul volume: un **tetto giornaliero** agli SMS inviati (oltre il quale l'app respinge ma non scrive, e lo dice all'utente) e la **esclusione dei numeri brevi e premium**, che un SMS di identificazione non ha senso di ricevere e che costerebbero molto più di un SMS normale. Respingere la chiamata, invece, non ha limiti: si respinge sempre.
+
+Considerato e scartato: **un SMS a ogni chiamata respinta** — cinque chiamate diventano cinque messaggi pagati; **un SMS al giorno per numero** — riapre lo stesso problema su chi insiste; **nessuna protezione sul volume** — un'app pubblica diventa un modo per far spendere soldi a chi la installa, e uno strumento per molestare un numero qualsiasi; **scadenza dello sblocco** — l'utente ha chiesto che i numeri restino bloccati finché non decide lui.
