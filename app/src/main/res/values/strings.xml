@@ -1,11 +1,47 @@
 <resources>
     <string name="app_name">Spam Saver</string>
 
-    <string name="onboarding_titolo">Due cose, prima di iniziare</string>
-    <string name="onboarding_perche">Per decidere se una chiamata deve squillare, Android deve dare a Spam Saver il ruolo di screening delle chiamate (Caller ID &amp; spam): senza, l\'app non può respingere gli sconosciuti. E per far passare chi è in rubrica deve poter leggere i contatti. I numeri restano sul telefono: nessun dato esce da qui.</string>
-    <string name="onboarding_chiedi_ruolo">Chiedi il ruolo di screening delle chiamate</string>
+    <string name="onboarding_titolo">Prima di iniziare</string>
+
+    <string name="onboarding_perche_chiamate">Per decidere se una chiamata deve squillare, Android deve dare a Spam Saver il ruolo di screening delle chiamate (Caller ID &amp; spam): senza, l\'app non può respingere gli sconosciuti. I numeri restano sul telefono: nessun dato esce da qui.</string>
+    <string name="onboarding_chiedi_ruolo_chiamate">Chiedi il ruolo di screening delle chiamate</string>
+
+    <string name="onboarding_perche_rubrica">Per far passare chi è in rubrica, Spam Saver deve poter leggere i contatti.</string>
     <string name="onboarding_chiedi_rubrica">Consenti la lettura della rubrica</string>
+
+    <string name="onboarding_perche_sms">Per chiedere «chi sei?» a chi chiama da sconosciuto, Spam Saver deve diventare il gestore SMS predefinito: solo così può mandare l\'SMS di identificazione e leggere le risposte.</string>
+    <string name="onboarding_costo_sms">Attenzione: l\'SMS di identificazione lo paghi tu. Parte una volta sola per ogni numero sconosciuto, e il tetto giornaliero lo tiene sotto controllo.</string>
+    <string name="onboarding_chiedi_ruolo_sms">Chiedi il ruolo di gestore SMS predefinito</string>
+
+    <string name="onboarding_perche_permesso_sms">Ultimo passo: senza il permesso di inviare SMS l\'app non può scrivere a chi chiama.</string>
+    <string name="onboarding_chiedi_permesso_sms">Consenti l\'invio degli SMS</string>
+
+    <string name="onboarding_perche_notifiche">Le notifiche servono a farti vedere subito i messaggi in arrivo e gli avvisi dell\'app.</string>
+    <string name="onboarding_chiedi_notifiche">Consenti le notifiche</string>
+
+    <string name="sezione_chiamate">Chiamate</string>
+    <string name="sezione_messaggi">Messaggi</string>
+    <string name="sezione_impostazioni">Impostazioni</string>
 
     <string name="storico_titolo">Chiamate respinte</string>
     <string name="storico_vuoto">Nessuna chiamata respinta, per ora.</string>
+
+    <string name="messaggi_vuoto">Nessun messaggio, per ora.</string>
+    <string name="messaggi_indietro">Conversazioni</string>
+    <string name="messaggi_tu">Tu</string>
+    <string name="messaggi_rispondi">Rispondi</string>
+    <string name="messaggi_invia">Invia</string>
+
+    <string name="impostazioni_titolo">SMS di identificazione</string>
+    <string name="impostazioni_testo">Testo del messaggio</string>
+    <string name="impostazioni_tetto">Tetto giornaliero di SMS</string>
+
+    <string name="sms_identificazione_predefinito">Ciao, sono Spam Saver. Questo numero ha chiamato un telefono che non lo conosce. Chi sei?</string>
+
+    <string name="avviso_tetto">Oggi hai raggiunto il tetto giornaliero: le chiamate sono state respinte, ma non è partito nessun altro SMS di identificazione.</string>
+
+    <string name="notifica_canale_messaggi">Messaggi</string>
+    <string name="notifica_canale_avvisi">Avvisi</string>
+    <string name="notifica_tetto_titolo">Tetto giornaliero raggiunto</string>
+    <string name="notifica_tetto_testo">Spam Saver ha respinto la chiamata ma non ha scritto: gli SMS di identificazione di oggi sono finiti.</string>
 </resources>
