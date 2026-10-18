@@ -26,6 +26,7 @@
     <string name="storico_titolo">Chiamate respinte</string>
     <string name="storico_vuoto">Nessuna chiamata respinta, per ora.</string>
     <string name="storico_sblocca">Sblocca</string>
+    <string name="storico_risposta">Ha risposto: %1$s — tocca per sbloccare</string>
 
     <string name="whitelist_titolo">Numeri sbloccati</string>
     <string name="whitelist_vuoto">Nessun numero sbloccato, per ora.</string>
