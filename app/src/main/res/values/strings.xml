@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">Spam Saver</string>
+
+    <string name="onboarding_titolo">Due cose, prima di iniziare</string>
+    <string name="onboarding_perche">Per decidere se una chiamata deve squillare, Android deve dare a Spam Saver il ruolo di screening delle chiamate (Caller ID &amp; spam): senza, l\'app non può respingere gli sconosciuti. E per far passare chi è in rubrica deve poter leggere i contatti. I numeri restano sul telefono: nessun dato esce da qui.</string>
+    <string name="onboarding_chiedi_ruolo">Chiedi il ruolo di screening delle chiamate</string>
+    <string name="onboarding_chiedi_rubrica">Consenti la lettura della rubrica</string>
+
+    <string name="storico_titolo">Chiamate respinte</string>
+    <string name="storico_vuoto">Nessuna chiamata respinta, per ora.</string>
 </resources>
