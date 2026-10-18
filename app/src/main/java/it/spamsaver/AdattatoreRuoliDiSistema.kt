@@ -9,9 +9,9 @@ import it.spamsaver.dominio.AdattatoreRuoli
  * L'[AdattatoreRuoli] di sistema: parla con `RoleManager`.
  *
  * Se il telefono non conosce il ruolo lo dice; se apre la richiesta riferisce se
- * l'attività c'è davvero. Non fa cadere l'app quando `RoleManager` manca o
- * quando nessuna attività raccoglie la richiesta: risponde di no, e l'onboarding
- * mostra il messaggio del caso «non disponibile».
+ * l'attività c'è davvero; al ritorno dice se il ruolo è stato concesso. Non fa
+ * cadere l'app quando `RoleManager` manca o quando nessuna attività raccoglie la
+ * richiesta: risponde di no, e l'onboarding mostra il messaggio del caso.
  */
 class AdattatoreRuoliDiSistema(
     private val contesto: Context,
@@ -30,4 +30,7 @@ class AdattatoreRuoliDiSistema(
             false
         }
     }
+
+    override fun ruoloOttenuto(): Boolean =
+        contesto.getSystemService(RoleManager::class.java)?.isRoleHeld(ruolo) == true
 }
