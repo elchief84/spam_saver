@@ -8,6 +8,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,11 +19,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import it.spamsaver.dominio.NumeroTelefono
 import it.spamsaver.dominio.Respinto
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -32,11 +35,13 @@ import java.time.format.DateTimeFormatter
  *
  * Se il ruolo di screening delle chiamate o la lettura della rubrica mancano,
  * l'onboarding li chiede spiegando perché servono; quando ci sono, la schermata
- * mostra lo storico dei respinti.
+ * mostra lo storico dei respinti e la whitelist: da qui si sblocca un numero o
+ * lo si rimette fuori.
  */
 class MainActivity : ComponentActivity() {
 
     private val respinti = mutableStateOf(emptyList<Respinto>())
+    private val whitelist = mutableStateOf(emptyList<NumeroTelefono>())
     private val onboarding = mutableStateOf(true)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,7 +56,12 @@ class MainActivity : ComponentActivity() {
                             onChiediRubrica = ::chiediRubrica,
                         )
                     } else {
-                        StoricoDeiRespinti(respinti.value)
+                        Schermata(
+                            respinti = respinti.value,
+                            whitelist = whitelist.value,
+                            onSblocca = ::sblocca,
+                            onRimuovi = ::rimuoviDallaWhitelist,
+                        )
                     }
                 }
             }
@@ -65,7 +75,18 @@ class MainActivity : ComponentActivity() {
 
     private fun aggiorna() {
         respinti.value = ArchivioRespinti(this).leggi().elenco
+        whitelist.value = ArchivioWhitelist(this).leggi().sortedBy { it.canonico }
         onboarding.value = !haRuoloERubrica()
+    }
+
+    private fun sblocca(numero: NumeroTelefono) {
+        ArchivioWhitelist(this).aggiungi(numero)
+        aggiorna()
+    }
+
+    private fun rimuoviDallaWhitelist(numero: NumeroTelefono) {
+        ArchivioWhitelist(this).rimuovi(numero)
+        aggiorna()
     }
 
     private fun haRuoloERubrica(): Boolean {
@@ -111,20 +132,52 @@ private fun Onboarding(onChiediRuolo: () -> Unit, onChiediRubrica: () -> Unit) {
 }
 
 @Composable
-private fun StoricoDeiRespinti(respinti: List<Respinto>) {
-    Column(
+private fun Schermata(
+    respinti: List<Respinto>,
+    whitelist: List<NumeroTelefono>,
+    onSblocca: (NumeroTelefono) -> Unit,
+    onRimuovi: (NumeroTelefono) -> Unit,
+) {
+    LazyColumn(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(
-            text = stringResource(R.string.storico_titolo),
-            style = MaterialTheme.typography.headlineSmall,
-        )
+        item {
+            Text(
+                text = stringResource(R.string.storico_titolo),
+                style = MaterialTheme.typography.headlineSmall,
+            )
+        }
         if (respinti.isEmpty()) {
-            Text(stringResource(R.string.storico_vuoto))
+            item { Text(stringResource(R.string.storico_vuoto)) }
         } else {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(respinti) { respinto -> Text(testoRespinto(respinto)) }
+            items(respinti) { respinto ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(testoRespinto(respinto), modifier = Modifier.weight(1f))
+                    Button(onClick = { onSblocca(respinto.numero) }) {
+                        Text(stringResource(R.string.storico_sblocca))
+                    }
+                }
+            }
+        }
+
+        item {
+            Text(
+                text = stringResource(R.string.whitelist_titolo),
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(top = 16.dp),
+            )
+        }
+        if (whitelist.isEmpty()) {
+            item { Text(stringResource(R.string.whitelist_vuoto)) }
+        } else {
+            items(whitelist) { numero ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(numero.toString(), modifier = Modifier.weight(1f))
+                    Button(onClick = { onRimuovi(numero) }) {
+                        Text(stringResource(R.string.whitelist_rimuovi))
+                    }
+                }
             }
         }
     }
