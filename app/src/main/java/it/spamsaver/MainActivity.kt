@@ -360,7 +360,7 @@ private fun Principale(
         }
 
         when (sezione) {
-            Sezione.Chiamate -> StoricoEWhitelist(respinti, whitelist, onSblocca, onRimuovi)
+            Sezione.Chiamate -> StoricoEWhitelist(respinti, whitelist, messaggi, onSblocca, onRimuovi)
             Sezione.Messaggi -> Messaggi(
                 messaggi = messaggi,
                 archiviate = archiviate,
@@ -387,9 +387,12 @@ private fun Principale(
 private fun StoricoEWhitelist(
     respinti: List<Respinto>,
     whitelist: List<NumeroTelefono>,
+    messaggi: List<Messaggio>,
     onSblocca: (NumeroTelefono) -> Unit,
     onRimuovi: (NumeroTelefono) -> Unit,
 ) {
+    val risposte = risposteDeiRespinti(respinti, messaggi)
+
     LazyColumn(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -404,10 +407,25 @@ private fun StoricoEWhitelist(
             item { Text(stringResource(R.string.storico_vuoto)) }
         } else {
             items(respinti) { respinto ->
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(testoRespinto(respinto), modifier = Modifier.weight(1f))
-                    Button(onClick = { onSblocca(respinto.numero) }) {
-                        Text(stringResource(R.string.storico_sblocca))
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(testoRespinto(respinto), modifier = Modifier.weight(1f))
+                        Button(onClick = { onSblocca(respinto.numero) }) {
+                            Text(stringResource(R.string.storico_sblocca))
+                        }
+                    }
+                    risposte[respinto.numero]?.let { risposta ->
+                        // La risposta è il modo per sbloccare: un tocco e il
+                        // numero passa dalle chiamate successive.
+                        Text(
+                            text = stringResource(R.string.storico_risposta, risposta.testo),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onSblocca(respinto.numero) }
+                                .padding(top = 4.dp),
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
                     }
                 }
             }

@@ -3,6 +3,7 @@ package it.spamsaver
 import android.content.Context
 import it.spamsaver.dominio.Messaggio
 import it.spamsaver.dominio.NumeroTelefono
+import it.spamsaver.dominio.Respinto
 import java.io.File
 import java.time.Instant
 import java.util.Base64
@@ -56,4 +57,25 @@ class ArchivioMessaggi(context: Context) {
         const val RICEVUTO = "I"
         const val INVIATO = "U"
     }
+}
+
+/**
+ * L'ultima **risposta** ricevuta da ciascun numero respinto, indicizzata per
+ * numero: le respinte senza risposta non compaiono.
+ *
+ * Una risposta è un messaggio ricevuto: l'SMS di identificazione che abbiamo
+ * mandato noi non conta. È quello che il riepilogo dei respinti mostra accanto
+ * al numero che ha risposto.
+ */
+fun risposteDeiRespinti(
+    respinti: List<Respinto>,
+    messaggi: List<Messaggio>,
+): Map<NumeroTelefono, Messaggio> {
+    val ricevutePerNumero = messaggi.filter { !it.inviato }.groupBy { it.numero }
+    return respinti.map { it.numero }
+        .distinct()
+        .mapNotNull { numero ->
+            ricevutePerNumero[numero]?.maxByOrNull { it.quando }?.let { numero to it }
+        }
+        .toMap()
 }
