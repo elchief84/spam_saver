@@ -6,13 +6,14 @@ import org.junit.Test
 class RichiestaRuoloTest {
 
     /**
-     * Il finto adattatore dei ruoli: dice se il ruolo c'è e se l'apertura riesce,
-     * e conta i tentativi. È il doppio dell'adattatore vero, quello che parla
-     * con `RoleManager`.
+     * Il finto adattatore dei ruoli: dice se il ruolo c'è, se l'apertura riesce e
+     * se alla fine il ruolo è stato concesso, e conta i tentativi. È il doppio
+     * dell'adattatore vero, quello che parla con `RoleManager`.
      */
     private class FintoAdattatoreRuoli(
         private val disponibile: Boolean,
         private val aperturaRiesce: Boolean = true,
+        private val ottenuto: Boolean = true,
     ) : AdattatoreRuoli {
 
         var aperture = 0
@@ -24,6 +25,8 @@ class RichiestaRuoloTest {
             aperture++
             return aperturaRiesce
         }
+
+        override fun ruoloOttenuto(): Boolean = ottenuto
     }
 
     @Test
@@ -54,5 +57,24 @@ class RichiestaRuoloTest {
         chiediRuolo(adattatore)
 
         assertEquals(0, adattatore.aperture)
+    }
+
+    @Test
+    fun `la richiesta partita che non concede il ruolo chiede il messaggio, non il silenzio`() {
+        // Il caso del Mi 9: la richiesta si apre, ma al ritorno il ruolo non c'è.
+        val adattatore = FintoAdattatoreRuoli(disponibile = true, ottenuto = false)
+
+        chiediRuolo(adattatore)
+
+        assertEquals(EsitoRitornoRuolo.NonConcesso, esitoAlRitorno(adattatore))
+    }
+
+    @Test
+    fun `la richiesta partita che concede il ruolo lascia proseguire`() {
+        val adattatore = FintoAdattatoreRuoli(disponibile = true, ottenuto = true)
+
+        chiediRuolo(adattatore)
+
+        assertEquals(EsitoRitornoRuolo.Concesso, esitoAlRitorno(adattatore))
     }
 }

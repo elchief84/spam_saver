@@ -44,6 +44,7 @@ import it.spamsaver.dominio.Bloccati
 import it.spamsaver.dominio.Conversazione
 import it.spamsaver.dominio.ConversazioniArchiviate
 import it.spamsaver.dominio.EsitoRichiestaRuolo
+import it.spamsaver.dominio.EsitoRitornoRuolo
 import it.spamsaver.dominio.Messaggio
 import it.spamsaver.dominio.NumeroTelefono
 import it.spamsaver.dominio.Respinto
@@ -53,6 +54,7 @@ import it.spamsaver.dominio.chiediRuolo
 import it.spamsaver.dominio.conversazioniArchiviate
 import it.spamsaver.dominio.conversazioniDi
 import it.spamsaver.dominio.elencoPrincipale
+import it.spamsaver.dominio.esitoAlRitorno
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -83,6 +85,8 @@ class MainActivity : ComponentActivity() {
     private val risposteRapide = mutableStateOf(RisposteRapide())
     private val ruoloChiamate = mutableStateOf(false)
     private val ruoloChiamateNonDisponibile = mutableStateOf(false)
+    private val ruoloChiamateNonConcesso = mutableStateOf(false)
+    private val richiestaRuoloChiamateAperta = mutableStateOf(false)
     private val saltatoRuoloChiamate = mutableStateOf(false)
     private val rubrica = mutableStateOf(false)
     private val ruoloSms = mutableStateOf(false)
@@ -121,6 +125,7 @@ class MainActivity : ComponentActivity() {
                         Onboarding(
                             passo = passoOnboarding(),
                             ruoloChiamateNonDisponibile = ruoloChiamateNonDisponibile.value,
+                            ruoloChiamateNonConcesso = ruoloChiamateNonConcesso.value,
                             onChiediRuoloChiamate = ::chiediRuoloChiamate,
                             onContinuaSenzaRuoloChiamate = ::continuaSenzaRuoloChiamate,
                             onChiediRubrica = ::chiediRubrica,
@@ -137,6 +142,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         aggiorna()
+        valutaRitornoRichiestaRuoloChiamate()
     }
 
     private fun aggiorna() {
@@ -215,8 +221,20 @@ class MainActivity : ComponentActivity() {
 
     private fun chiediRuoloChiamate() {
         val esito = chiediRuolo(AdattatoreRuoliDiSistema(this, RoleManager.ROLE_CALL_SCREENING))
-        if (esito == EsitoRichiestaRuolo.NonDisponibile) {
-            ruoloChiamateNonDisponibile.value = true
+        when (esito) {
+            EsitoRichiestaRuolo.Aperta -> richiestaRuoloChiamateAperta.value = true
+            EsitoRichiestaRuolo.NonDisponibile -> ruoloChiamateNonDisponibile.value = true
+        }
+    }
+
+    // Al ritorno dalla richiesta di sistema il ruolo può non esserci — la schermata
+    // non è comparsa o si è annullata. La decisione è pura: qui si applica solo.
+    private fun valutaRitornoRichiestaRuoloChiamate() {
+        if (!richiestaRuoloChiamateAperta.value) return
+        richiestaRuoloChiamateAperta.value = false
+        val esito = esitoAlRitorno(AdattatoreRuoliDiSistema(this, RoleManager.ROLE_CALL_SCREENING))
+        if (esito == EsitoRitornoRuolo.NonConcesso) {
+            ruoloChiamateNonConcesso.value = true
         }
     }
 
@@ -270,6 +288,7 @@ class MainActivity : ComponentActivity() {
 private fun Onboarding(
     passo: Passo,
     ruoloChiamateNonDisponibile: Boolean,
+    ruoloChiamateNonConcesso: Boolean,
     onChiediRuoloChiamate: () -> Unit,
     onContinuaSenzaRuoloChiamate: () -> Unit,
     onChiediRubrica: () -> Unit,
@@ -288,10 +307,16 @@ private fun Onboarding(
         when (passo) {
             Passo.Chiamate -> {
                 Text(stringResource(R.string.onboarding_perche_chiamate))
-                if (ruoloChiamateNonDisponibile) {
-                    // Il telefono non offre il ruolo: dirlo, e lasciar proseguire
-                    // invece di restare fermi su un pulsante che non fa niente.
-                    Text(stringResource(R.string.onboarding_ruolo_chiamate_non_disponibile))
+                // Il ruolo non c'è, perché il telefono non lo offre o perché la
+                // richiesta non l'ha concesso: dirlo e lasciar proseguire, invece
+                // di restare fermi su un pulsante che non fa niente.
+                val avviso = when {
+                    ruoloChiamateNonDisponibile -> R.string.onboarding_ruolo_chiamate_non_disponibile
+                    ruoloChiamateNonConcesso -> R.string.onboarding_ruolo_chiamate_non_concesso
+                    else -> null
+                }
+                if (avviso != null) {
+                    Text(stringResource(avviso))
                     Button(onClick = onContinuaSenzaRuoloChiamate) {
                         Text(stringResource(R.string.onboarding_continua))
                     }

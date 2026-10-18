@@ -17,6 +17,12 @@ interface AdattatoreRuoli {
      * raccolga, risponde `false`.
      */
     fun apriRichiesta(): Boolean
+
+    /**
+     * `true` se l'app ha ora il ruolo: la richiesta di sistema è andata a buon
+     * fine. Serve al ritorno nell'app, quando la richiesta è già partita.
+     */
+    fun ruoloOttenuto(): Boolean
 }
 
 /** Come è andata la richiesta di un ruolo di sistema. */
@@ -30,6 +36,19 @@ enum class EsitoRichiestaRuolo {
      * che lo dice, invece di lasciare l'onboarding muto.
      */
     NonDisponibile,
+}
+
+/** Com'è andata la richiesta di un ruolo di sistema, al ritorno nell'app. */
+enum class EsitoRitornoRuolo {
+
+    /** Il ruolo ora è dell'app: l'onboarding prosegue. */
+    Concesso,
+
+    /**
+     * La richiesta era partita ma il ruolo non c'è: va mostrato un messaggio che
+     * lo dice, invece di lasciare l'onboarding muto.
+     */
+    NonConcesso,
 }
 
 /**
@@ -46,4 +65,24 @@ fun chiediRuolo(adattatore: AdattatoreRuoli): EsitoRichiestaRuolo =
         EsitoRichiestaRuolo.Aperta
     } else {
         EsitoRichiestaRuolo.NonDisponibile
+    }
+
+/**
+ * Decide se la richiesta di un ruolo è andata a buon fine quando l'utente torna
+ * nell'app.
+ *
+ * È pura: chiede all'adattatore se il ruolo è ora dell'app. Su alcuni telefoni
+ * — il Mi 9 con Android 10 e MIUI, per esempio — la richiesta si apre ma il
+ * ruolo non viene mai concesso: la schermata di sistema non compare o si
+ * annulla, mentre [AdattatoreRuoli.apriRichiesta] ha già risposto `true` e
+ * [chiediRuolo] dice [EsitoRichiestaRuolo.Aperta]. È al ritorno che il caso si
+ * distingue dal successo: se il ruolo non c'è, l'esito è
+ * [EsitoRitornoRuolo.NonConcesso] e l'onboarding mostra il messaggio, invece di
+ * restare muto.
+ */
+fun esitoAlRitorno(adattatore: AdattatoreRuoli): EsitoRitornoRuolo =
+    if (adattatore.ruoloOttenuto()) {
+        EsitoRitornoRuolo.Concesso
+    } else {
+        EsitoRitornoRuolo.NonConcesso
     }
