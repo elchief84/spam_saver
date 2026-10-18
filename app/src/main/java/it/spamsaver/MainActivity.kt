@@ -29,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
@@ -54,11 +55,13 @@ private enum class Sezione { Chiamate, Messaggi, Impostazioni }
  * L'onboarding chiede prima il ruolo di screening delle chiamate, poi la
  * rubrica, poi — avvisando del costo — il ruolo di gestore SMS e i permessi che
  * ne dipendono. Quando non manca niente, la schermata mostra le chiamate
- * respinte, le conversazioni e le impostazioni dell'SMS di identificazione.
+ * respinte e la whitelist — da qui si sblocca un numero o lo si rimette fuori —
+ * le conversazioni e le impostazioni dell'SMS di identificazione.
  */
 class MainActivity : ComponentActivity() {
 
     private val respinti = mutableStateOf(emptyList<Respinto>())
+    private val whitelist = mutableStateOf(emptyList<NumeroTelefono>())
     private val messaggi = mutableStateOf(emptyList<Messaggio>())
     private val ruoloChiamate = mutableStateOf(false)
     private val rubrica = mutableStateOf(false)
@@ -77,9 +80,12 @@ class MainActivity : ComponentActivity() {
                     if (passoOnboarding() == Passo.Fatto) {
                         Principale(
                             respinti = respinti.value,
+                            whitelist = whitelist.value,
                             messaggi = messaggi.value,
                             tettoRaggiunto = tettoRaggiunto.value,
                             impostazioni = impostazioni,
+                            onSblocca = ::sblocca,
+                            onRimuovi = ::rimuoviDallaWhitelist,
                             onRispondi = ::rispondi,
                         )
                     } else {
@@ -104,6 +110,7 @@ class MainActivity : ComponentActivity() {
 
     private fun aggiorna() {
         respinti.value = ArchivioRespinti(this).leggi().elenco
+        whitelist.value = ArchivioWhitelist(this).leggi().sortedBy { it.canonico }
         messaggi.value = ArchivioMessaggi(this).leggi()
         ruoloChiamate.value = haRuolo(RoleManager.ROLE_CALL_SCREENING)
         rubrica.value = haPermesso(Manifest.permission.READ_CONTACTS)
@@ -112,6 +119,16 @@ class MainActivity : ComponentActivity() {
         permessoNotifiche.value =
             !richiedeNotifiche() || haPermesso(Manifest.permission.POST_NOTIFICATIONS)
         tettoRaggiunto.value = eOggi(impostazioni.ultimoTettoRaggiunto)
+    }
+
+    private fun sblocca(numero: NumeroTelefono) {
+        ArchivioWhitelist(this).aggiungi(numero)
+        aggiorna()
+    }
+
+    private fun rimuoviDallaWhitelist(numero: NumeroTelefono) {
+        ArchivioWhitelist(this).rimuovi(numero)
+        aggiorna()
     }
 
     private fun passoOnboarding(): Passo = when {
@@ -240,9 +257,12 @@ private fun Onboarding(
 @Composable
 private fun Principale(
     respinti: List<Respinto>,
+    whitelist: List<NumeroTelefono>,
     messaggi: List<Messaggio>,
     tettoRaggiunto: Boolean,
     impostazioni: Impostazioni,
+    onSblocca: (NumeroTelefono) -> Unit,
+    onRimuovi: (NumeroTelefono) -> Unit,
     onRispondi: (NumeroTelefono, String) -> Unit,
 ) {
     var sezione by remember { mutableStateOf(Sezione.Chiamate) }
@@ -273,7 +293,7 @@ private fun Principale(
         }
 
         when (sezione) {
-            Sezione.Chiamate -> StoricoDeiRespinti(respinti)
+            Sezione.Chiamate -> StoricoEWhitelist(respinti, whitelist, onSblocca, onRimuovi)
             Sezione.Messaggi -> Messaggi(messaggi, onRispondi)
             Sezione.Impostazioni -> SchermataImpostazioni(impostazioni)
         }
@@ -281,20 +301,52 @@ private fun Principale(
 }
 
 @Composable
-private fun StoricoDeiRespinti(respinti: List<Respinto>) {
-    Column(
+private fun StoricoEWhitelist(
+    respinti: List<Respinto>,
+    whitelist: List<NumeroTelefono>,
+    onSblocca: (NumeroTelefono) -> Unit,
+    onRimuovi: (NumeroTelefono) -> Unit,
+) {
+    LazyColumn(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(
-            text = stringResource(R.string.storico_titolo),
-            style = MaterialTheme.typography.headlineSmall,
-        )
+        item {
+            Text(
+                text = stringResource(R.string.storico_titolo),
+                style = MaterialTheme.typography.headlineSmall,
+            )
+        }
         if (respinti.isEmpty()) {
-            Text(stringResource(R.string.storico_vuoto))
+            item { Text(stringResource(R.string.storico_vuoto)) }
         } else {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(respinti) { respinto -> Text(testoRespinto(respinto)) }
+            items(respinti) { respinto ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(testoRespinto(respinto), modifier = Modifier.weight(1f))
+                    Button(onClick = { onSblocca(respinto.numero) }) {
+                        Text(stringResource(R.string.storico_sblocca))
+                    }
+                }
+            }
+        }
+
+        item {
+            Text(
+                text = stringResource(R.string.whitelist_titolo),
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(top = 16.dp),
+            )
+        }
+        if (whitelist.isEmpty()) {
+            item { Text(stringResource(R.string.whitelist_vuoto)) }
+        } else {
+            items(whitelist) { numero ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(numero.toString(), modifier = Modifier.weight(1f))
+                    Button(onClick = { onRimuovi(numero) }) {
+                        Text(stringResource(R.string.whitelist_rimuovi))
+                    }
+                }
             }
         }
     }

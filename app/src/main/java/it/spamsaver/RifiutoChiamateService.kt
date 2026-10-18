@@ -26,6 +26,7 @@ class RifiutoChiamateService : CallScreeningService() {
         val chiamata = Chiamata.daNumeroGrezzo(details.handle?.schemeSpecificPart)
         val numero = (chiamata as? Chiamata.Numero)?.numero
         val statoBase = Rubrica(this).statoPer(chiamata)
+            .copy(inWhitelist = ArchivioWhitelist(this).leggi())
 
         val impostazioni = Impostazioni(this)
         val interrogati = ArchivioInterrogati(this)

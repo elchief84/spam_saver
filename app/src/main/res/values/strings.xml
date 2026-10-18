@@ -25,6 +25,11 @@
 
     <string name="storico_titolo">Chiamate respinte</string>
     <string name="storico_vuoto">Nessuna chiamata respinta, per ora.</string>
+    <string name="storico_sblocca">Sblocca</string>
+
+    <string name="whitelist_titolo">Numeri sbloccati</string>
+    <string name="whitelist_vuoto">Nessun numero sbloccato, per ora.</string>
+    <string name="whitelist_rimuovi">Togli dalla whitelist</string>
 
     <string name="messaggi_vuoto">Nessun messaggio, per ora.</string>
     <string name="messaggi_indietro">Conversazioni</string>

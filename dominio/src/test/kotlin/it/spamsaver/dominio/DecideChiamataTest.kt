@@ -122,4 +122,32 @@ class DecideChiamataTest {
         )
         assertEquals(passa, esito)
     }
+
+    @Test
+    fun `un numero con prefisso internazionale e spazi e riconosciuto se in whitelist`() {
+        // La stessa normalizzazione vale per la whitelist: le due strade di
+        // sblocco devono riconoscere il numero allo stesso modo.
+        val esito = decideChiamata(
+            Chiamata.daNumeroGrezzo("+39 333 123 4567"),
+            stato(inWhitelist = setOf("3331234567")),
+        )
+        assertEquals(passa, esito)
+    }
+
+    @Test
+    fun `un numero tolto dalla whitelist torna a essere respinto`() {
+        val numero = numero("3331234567")
+
+        val inWhitelist = decideChiamata(
+            Chiamata.Numero(numero),
+            stato(inWhitelist = setOf("3331234567")),
+        )
+        val fuoriWhitelist = decideChiamata(
+            Chiamata.Numero(numero),
+            stato(inWhitelist = emptySet()),
+        )
+
+        assertEquals(passa, inWhitelist)
+        assertEquals(respintaConSms, fuoriWhitelist)
+    }
 }
