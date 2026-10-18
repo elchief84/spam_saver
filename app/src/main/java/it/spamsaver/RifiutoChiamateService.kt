@@ -18,7 +18,9 @@ class RifiutoChiamateService : CallScreeningService() {
 
     override fun onScreenCall(details: Call.Details) {
         val chiamata = Chiamata.daNumeroGrezzo(details.handle?.schemeSpecificPart)
-        val esito = decideChiamata(chiamata, Rubrica(this).statoPer(chiamata))
+        val stato = Rubrica(this).statoPer(chiamata)
+            .copy(inWhitelist = ArchivioWhitelist(this).leggi())
+        val esito = decideChiamata(chiamata, stato)
 
         respondToCall(
             details,
