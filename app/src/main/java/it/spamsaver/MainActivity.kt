@@ -43,11 +43,13 @@ import androidx.core.content.ContextCompat
 import it.spamsaver.dominio.Bloccati
 import it.spamsaver.dominio.Conversazione
 import it.spamsaver.dominio.ConversazioniArchiviate
+import it.spamsaver.dominio.EsitoRichiestaRuolo
 import it.spamsaver.dominio.Messaggio
 import it.spamsaver.dominio.NumeroTelefono
 import it.spamsaver.dominio.Respinto
 import it.spamsaver.dominio.RisposteRapide
 import it.spamsaver.dominio.cerca
+import it.spamsaver.dominio.chiediRuolo
 import it.spamsaver.dominio.conversazioniArchiviate
 import it.spamsaver.dominio.conversazioniDi
 import it.spamsaver.dominio.elencoPrincipale
@@ -80,6 +82,8 @@ class MainActivity : ComponentActivity() {
     private val bloccati = mutableStateOf(Bloccati())
     private val risposteRapide = mutableStateOf(RisposteRapide())
     private val ruoloChiamate = mutableStateOf(false)
+    private val ruoloChiamateNonDisponibile = mutableStateOf(false)
+    private val saltatoRuoloChiamate = mutableStateOf(false)
     private val rubrica = mutableStateOf(false)
     private val ruoloSms = mutableStateOf(false)
     private val permessoSms = mutableStateOf(false)
@@ -116,7 +120,9 @@ class MainActivity : ComponentActivity() {
                     } else {
                         Onboarding(
                             passo = passoOnboarding(),
+                            ruoloChiamateNonDisponibile = ruoloChiamateNonDisponibile.value,
                             onChiediRuoloChiamate = ::chiediRuoloChiamate,
+                            onContinuaSenzaRuoloChiamate = ::continuaSenzaRuoloChiamate,
                             onChiediRubrica = ::chiediRubrica,
                             onChiediRuoloSms = ::chiediRuoloSms,
                             onChiediPermessoSms = ::chiediPermessoSms,
@@ -190,7 +196,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun passoOnboarding(): Passo = when {
-        !ruoloChiamate.value -> Passo.Chiamate
+        !ruoloChiamate.value && !saltatoRuoloChiamate.value -> Passo.Chiamate
         !rubrica.value -> Passo.Rubrica
         !ruoloSms.value -> Passo.Sms
         !permessoSms.value -> Passo.PermessoSms
@@ -207,13 +213,21 @@ class MainActivity : ComponentActivity() {
         aggiorna()
     }
 
-    private fun chiediRuoloChiamate() = chiediRuolo(RoleManager.ROLE_CALL_SCREENING)
+    private fun chiediRuoloChiamate() {
+        val esito = chiediRuolo(AdattatoreRuoliDiSistema(this, RoleManager.ROLE_CALL_SCREENING))
+        if (esito == EsitoRichiestaRuolo.NonDisponibile) {
+            ruoloChiamateNonDisponibile.value = true
+        }
+    }
 
-    private fun chiediRuoloSms() = chiediRuolo(RoleManager.ROLE_SMS)
-
-    private fun chiediRuolo(ruolo: String) {
+    // Il ruolo SMS non è oggetto di questo lavoro: resta la richiesta di prima.
+    private fun chiediRuoloSms() {
         val gestoreRuoli = getSystemService(RoleManager::class.java) ?: return
-        startActivity(gestoreRuoli.createRequestRoleIntent(ruolo))
+        startActivity(gestoreRuoli.createRequestRoleIntent(RoleManager.ROLE_SMS))
+    }
+
+    private fun continuaSenzaRuoloChiamate() {
+        saltatoRuoloChiamate.value = true
     }
 
     private fun chiediRubrica() =
@@ -255,7 +269,9 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun Onboarding(
     passo: Passo,
+    ruoloChiamateNonDisponibile: Boolean,
     onChiediRuoloChiamate: () -> Unit,
+    onContinuaSenzaRuoloChiamate: () -> Unit,
     onChiediRubrica: () -> Unit,
     onChiediRuoloSms: () -> Unit,
     onChiediPermessoSms: () -> Unit,
@@ -272,8 +288,17 @@ private fun Onboarding(
         when (passo) {
             Passo.Chiamate -> {
                 Text(stringResource(R.string.onboarding_perche_chiamate))
-                Button(onClick = onChiediRuoloChiamate) {
-                    Text(stringResource(R.string.onboarding_chiedi_ruolo_chiamate))
+                if (ruoloChiamateNonDisponibile) {
+                    // Il telefono non offre il ruolo: dirlo, e lasciar proseguire
+                    // invece di restare fermi su un pulsante che non fa niente.
+                    Text(stringResource(R.string.onboarding_ruolo_chiamate_non_disponibile))
+                    Button(onClick = onContinuaSenzaRuoloChiamate) {
+                        Text(stringResource(R.string.onboarding_continua))
+                    }
+                } else {
+                    Button(onClick = onChiediRuoloChiamate) {
+                        Text(stringResource(R.string.onboarding_chiedi_ruolo_chiamate))
+                    }
                 }
             }
 
