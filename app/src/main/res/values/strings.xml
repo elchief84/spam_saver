@@ -36,10 +36,24 @@
     <string name="messaggi_tu">Tu</string>
     <string name="messaggi_rispondi">Rispondi</string>
     <string name="messaggi_invia">Invia</string>
+    <string name="messaggi_cerca">Cerca nei messaggi</string>
+    <string name="messaggi_ricerca_vuota">Nessun messaggio trovato.</string>
+    <string name="messaggi_conversazioni">Conversazioni</string>
+    <string name="messaggi_archiviate">Archiviate</string>
+    <string name="messaggi_archivio_vuoto">Nessuna conversazione archiviata.</string>
+    <string name="messaggi_blocca">Blocca mittente</string>
+    <string name="messaggi_sblocca">Sblocca mittente</string>
+    <string name="messaggi_archivia">Archivia</string>
+    <string name="messaggi_ripristina">Ripristina</string>
 
     <string name="impostazioni_titolo">SMS di identificazione</string>
     <string name="impostazioni_testo">Testo del messaggio</string>
     <string name="impostazioni_tetto">Tetto giornaliero di SMS</string>
+    <string name="impostazioni_risposte_rapide">Risposte rapide</string>
+    <string name="impostazioni_risposte_vuote">Nessuna risposta rapida, per ora.</string>
+    <string name="impostazioni_nuova_risposta">Nuova risposta rapida</string>
+    <string name="impostazioni_aggiungi">Aggiungi</string>
+    <string name="impostazioni_rimuovi">Rimuovi</string>
 
     <string name="sms_identificazione_predefinito">Ciao, sono Spam Saver. Questo numero ha chiamato un telefono che non lo conosce. Chi sei?</string>
 

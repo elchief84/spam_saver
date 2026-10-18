@@ -10,6 +10,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.content.ContextCompat
+import it.spamsaver.dominio.Messaggio
 
 /**
  * Le notifiche dell'app: un SMS in arrivo e l'avviso che il tetto giornaliero

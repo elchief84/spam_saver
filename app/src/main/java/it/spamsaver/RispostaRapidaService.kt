@@ -3,6 +3,7 @@ package it.spamsaver
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
+import it.spamsaver.dominio.Messaggio
 import it.spamsaver.dominio.NumeroTelefono
 import java.time.Instant
 
