@@ -53,3 +53,7 @@ Un incarico di sistema che l'utente assegna all'app: il **gestore SMS predefinit
 **Storico dei respinti**:
 L'elenco delle chiamate respinte, con il numero e quando ha chiamato. È da lì che si sblocca o si lascia bloccato.
 _Avoid_: call log (quello è del telefono)
+
+**Mittente bloccato**:
+Un numero di cui l'utente non vuole ricevere le notifiche. Bloccare un mittente **non** cambia il trattamento delle sue chiamate — respingere gli sconosciuti è già il comportamento predefinito, e un numero in rubrica o in whitelist continua a passare: significa solo che i suoi SMS non si notificano, pur restando nella conversazione. Si blocca e si sblocca dalla conversazione stessa.
+_Avoid_: blacklist, numero indesiderato (l'app non ha una blacklist)

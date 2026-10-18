@@ -8,6 +8,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,7 +17,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -37,8 +40,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import it.spamsaver.dominio.Bloccati
+import it.spamsaver.dominio.Conversazione
+import it.spamsaver.dominio.ConversazioniArchiviate
+import it.spamsaver.dominio.Messaggio
 import it.spamsaver.dominio.NumeroTelefono
 import it.spamsaver.dominio.Respinto
+import it.spamsaver.dominio.RisposteRapide
+import it.spamsaver.dominio.cerca
+import it.spamsaver.dominio.conversazioniArchiviate
+import it.spamsaver.dominio.conversazioniDi
+import it.spamsaver.dominio.elencoPrincipale
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -56,13 +68,17 @@ private enum class Sezione { Chiamate, Messaggi, Impostazioni }
  * rubrica, poi — avvisando del costo — il ruolo di gestore SMS e i permessi che
  * ne dipendono. Quando non manca niente, la schermata mostra le chiamate
  * respinte e la whitelist — da qui si sblocca un numero o lo si rimette fuori —
- * le conversazioni e le impostazioni dell'SMS di identificazione.
+ * le conversazioni, con ricerca, archivio, blocco del mittente e risposte
+ * rapide, e le impostazioni dell'SMS di identificazione.
  */
 class MainActivity : ComponentActivity() {
 
     private val respinti = mutableStateOf(emptyList<Respinto>())
     private val whitelist = mutableStateOf(emptyList<NumeroTelefono>())
     private val messaggi = mutableStateOf(emptyList<Messaggio>())
+    private val archiviate = mutableStateOf(ConversazioniArchiviate())
+    private val bloccati = mutableStateOf(Bloccati())
+    private val risposteRapide = mutableStateOf(RisposteRapide())
     private val ruoloChiamate = mutableStateOf(false)
     private val rubrica = mutableStateOf(false)
     private val ruoloSms = mutableStateOf(false)
@@ -82,11 +98,20 @@ class MainActivity : ComponentActivity() {
                             respinti = respinti.value,
                             whitelist = whitelist.value,
                             messaggi = messaggi.value,
+                            archiviate = archiviate.value,
+                            bloccati = bloccati.value,
+                            risposteRapide = risposteRapide.value,
                             tettoRaggiunto = tettoRaggiunto.value,
                             impostazioni = impostazioni,
                             onSblocca = ::sblocca,
                             onRimuovi = ::rimuoviDallaWhitelist,
                             onRispondi = ::rispondi,
+                            onArchivia = ::archivia,
+                            onRipristina = ::ripristina,
+                            onBlocca = ::bloccaMittente,
+                            onSbloccaMittente = ::sbloccaMittente,
+                            onAggiungiRispostaRapida = ::aggiungiRispostaRapida,
+                            onRimuoviRispostaRapida = ::rimuoviRispostaRapida,
                         )
                     } else {
                         Onboarding(
@@ -112,6 +137,9 @@ class MainActivity : ComponentActivity() {
         respinti.value = ArchivioRespinti(this).leggi().elenco
         whitelist.value = ArchivioWhitelist(this).leggi().sortedBy { it.canonico }
         messaggi.value = ArchivioMessaggi(this).leggi()
+        archiviate.value = ArchivioConversazioni(this).leggi()
+        bloccati.value = ArchivioBloccati(this).leggi()
+        risposteRapide.value = ArchivioRisposteRapide(this).leggi()
         ruoloChiamate.value = haRuolo(RoleManager.ROLE_CALL_SCREENING)
         rubrica.value = haPermesso(Manifest.permission.READ_CONTACTS)
         ruoloSms.value = haRuolo(RoleManager.ROLE_SMS)
@@ -128,6 +156,36 @@ class MainActivity : ComponentActivity() {
 
     private fun rimuoviDallaWhitelist(numero: NumeroTelefono) {
         ArchivioWhitelist(this).rimuovi(numero)
+        aggiorna()
+    }
+
+    private fun archivia(numero: NumeroTelefono) {
+        ArchivioConversazioni(this).archivia(numero)
+        aggiorna()
+    }
+
+    private fun ripristina(numero: NumeroTelefono) {
+        ArchivioConversazioni(this).ripristina(numero)
+        aggiorna()
+    }
+
+    private fun bloccaMittente(numero: NumeroTelefono) {
+        ArchivioBloccati(this).blocca(numero)
+        aggiorna()
+    }
+
+    private fun sbloccaMittente(numero: NumeroTelefono) {
+        ArchivioBloccati(this).sblocca(numero)
+        aggiorna()
+    }
+
+    private fun aggiungiRispostaRapida(testo: String) {
+        ArchivioRisposteRapide(this).aggiungi(testo)
+        aggiorna()
+    }
+
+    private fun rimuoviRispostaRapida(testo: String) {
+        ArchivioRisposteRapide(this).rimuovi(testo)
         aggiorna()
     }
 
@@ -259,11 +317,20 @@ private fun Principale(
     respinti: List<Respinto>,
     whitelist: List<NumeroTelefono>,
     messaggi: List<Messaggio>,
+    archiviate: ConversazioniArchiviate,
+    bloccati: Bloccati,
+    risposteRapide: RisposteRapide,
     tettoRaggiunto: Boolean,
     impostazioni: Impostazioni,
     onSblocca: (NumeroTelefono) -> Unit,
     onRimuovi: (NumeroTelefono) -> Unit,
     onRispondi: (NumeroTelefono, String) -> Unit,
+    onArchivia: (NumeroTelefono) -> Unit,
+    onRipristina: (NumeroTelefono) -> Unit,
+    onBlocca: (NumeroTelefono) -> Unit,
+    onSbloccaMittente: (NumeroTelefono) -> Unit,
+    onAggiungiRispostaRapida: (String) -> Unit,
+    onRimuoviRispostaRapida: (String) -> Unit,
 ) {
     var sezione by remember { mutableStateOf(Sezione.Chiamate) }
 
@@ -294,8 +361,24 @@ private fun Principale(
 
         when (sezione) {
             Sezione.Chiamate -> StoricoEWhitelist(respinti, whitelist, messaggi, onSblocca, onRimuovi)
-            Sezione.Messaggi -> Messaggi(messaggi, onRispondi)
-            Sezione.Impostazioni -> SchermataImpostazioni(impostazioni)
+            Sezione.Messaggi -> Messaggi(
+                messaggi = messaggi,
+                archiviate = archiviate,
+                bloccati = bloccati,
+                risposteRapide = risposteRapide,
+                onRispondi = onRispondi,
+                onArchivia = onArchivia,
+                onRipristina = onRipristina,
+                onBlocca = onBlocca,
+                onSbloccaMittente = onSbloccaMittente,
+            )
+
+            Sezione.Impostazioni -> SchermataImpostazioni(
+                impostazioni = impostazioni,
+                risposteRapide = risposteRapide,
+                onAggiungiRispostaRapida = onAggiungiRispostaRapida,
+                onRimuoviRispostaRapida = onRimuoviRispostaRapida,
+            )
         }
     }
 }
@@ -371,7 +454,17 @@ private fun StoricoEWhitelist(
 }
 
 @Composable
-private fun Messaggi(messaggi: List<Messaggio>, onRispondi: (NumeroTelefono, String) -> Unit) {
+private fun Messaggi(
+    messaggi: List<Messaggio>,
+    archiviate: ConversazioniArchiviate,
+    bloccati: Bloccati,
+    risposteRapide: RisposteRapide,
+    onRispondi: (NumeroTelefono, String) -> Unit,
+    onArchivia: (NumeroTelefono) -> Unit,
+    onRipristina: (NumeroTelefono) -> Unit,
+    onBlocca: (NumeroTelefono) -> Unit,
+    onSbloccaMittente: (NumeroTelefono) -> Unit,
+) {
     if (messaggi.isEmpty()) {
         Text(
             text = stringResource(R.string.messaggi_vuoto),
@@ -381,47 +474,148 @@ private fun Messaggi(messaggi: List<Messaggio>, onRispondi: (NumeroTelefono, Str
     }
 
     val conversazioni = conversazioniDi(messaggi)
+    var ricerca by remember { mutableStateOf("") }
+    var mostraArchiviate by remember { mutableStateOf(false) }
     var numeroAperto by remember { mutableStateOf<NumeroTelefono?>(null) }
+
     val aperto = numeroAperto
-    if (aperto == null) {
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
-            items(conversazioni) { conversazione ->
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { numeroAperto = conversazione.numero }
-                        .padding(16.dp),
-                ) {
-                    Text(
-                        text = conversazione.numero.canonico,
-                        style = MaterialTheme.typography.titleMedium,
-                    )
-                    Text(
-                        text = conversazione.messaggi.last().testo,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
+    if (aperto != null) {
+        ConversazioneAperta(
+            conversazione = conversazioni.first { it.numero == aperto },
+            bloccato = bloccati.contiene(aperto),
+            archiviata = archiviate.contiene(aperto),
+            risposteRapide = risposteRapide.elenco,
+            onRispondi = onRispondi,
+            onArchivia = { onArchivia(aperto) },
+            onRipristina = { onRipristina(aperto) },
+            onBlocca = { onBlocca(aperto) },
+            onSbloccaMittente = { onSbloccaMittente(aperto) },
+            onIndietro = { numeroAperto = null },
+        )
+        return
+    }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        OutlinedTextField(
+            value = ricerca,
+            onValueChange = { ricerca = it },
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+            placeholder = { Text(stringResource(R.string.messaggi_cerca)) },
+        )
+
+        if (ricerca.isNotBlank()) {
+            ElencoRicerca(conversazioni, ricerca) { numeroAperto = it }
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                TextButton(onClick = { mostraArchiviate = false }) {
+                    Text(stringResource(R.string.messaggi_conversazioni))
+                }
+                TextButton(onClick = { mostraArchiviate = true }) {
+                    Text(stringResource(R.string.messaggi_archiviate))
                 }
             }
+            ElencoConversazioni(conversazioni, archiviate, mostraArchiviate) { numeroAperto = it }
         }
+    }
+}
+
+@Composable
+private fun ElencoRicerca(
+    conversazioni: List<Conversazione>,
+    ricerca: String,
+    onApri: (NumeroTelefono) -> Unit,
+) {
+    val trovati = cerca(conversazioni, ricerca)
+    if (trovati.isEmpty()) {
+        Text(
+            text = stringResource(R.string.messaggi_ricerca_vuota),
+            modifier = Modifier.padding(16.dp),
+        )
+        return
+    }
+
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
+        items(trovati) { trovato ->
+            RigaConversazione(
+                numero = trovato.conversazione.numero,
+                anteprima = trovato.messaggi.last().testo,
+                onClick = { onApri(trovato.conversazione.numero) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun ElencoConversazioni(
+    conversazioni: List<Conversazione>,
+    archiviate: ConversazioniArchiviate,
+    mostraArchiviate: Boolean,
+    onApri: (NumeroTelefono) -> Unit,
+) {
+    val elenco = if (mostraArchiviate) {
+        conversazioniArchiviate(conversazioni, archiviate)
     } else {
-        ConversazioneAperta(
-            numero = aperto,
-            messaggi = conversazioni.first { it.numero == aperto }.messaggi,
-            onRispondi = onRispondi,
-            onIndietro = { numeroAperto = null },
+        elencoPrincipale(conversazioni, archiviate)
+    }
+    if (elenco.isEmpty()) {
+        Text(
+            text = stringResource(
+                if (mostraArchiviate) R.string.messaggi_archivio_vuoto else R.string.messaggi_vuoto,
+            ),
+            modifier = Modifier.padding(16.dp),
+        )
+        return
+    }
+
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
+        items(elenco) { conversazione ->
+            RigaConversazione(
+                numero = conversazione.numero,
+                anteprima = conversazione.messaggi.last().testo,
+                onClick = { onApri(conversazione.numero) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun RigaConversazione(numero: NumeroTelefono, anteprima: String, onClick: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(16.dp),
+    ) {
+        Text(
+            text = numero.canonico,
+            style = MaterialTheme.typography.titleMedium,
+        )
+        Text(
+            text = anteprima,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.bodyMedium,
         )
     }
 }
 
 @Composable
 private fun ConversazioneAperta(
-    numero: NumeroTelefono,
-    messaggi: List<Messaggio>,
+    conversazione: Conversazione,
+    bloccato: Boolean,
+    archiviata: Boolean,
+    risposteRapide: List<String>,
     onRispondi: (NumeroTelefono, String) -> Unit,
+    onArchivia: () -> Unit,
+    onRipristina: () -> Unit,
+    onBlocca: () -> Unit,
+    onSbloccaMittente: () -> Unit,
     onIndietro: () -> Unit,
 ) {
+    val numero = conversazione.numero
     var risposta by remember(numero) { mutableStateOf("") }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -431,9 +625,34 @@ private fun ConversazioneAperta(
             modifier = Modifier.padding(horizontal = 16.dp),
             style = MaterialTheme.typography.titleMedium,
         )
+
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            TextButton(onClick = if (bloccato) onSbloccaMittente else onBlocca) {
+                Text(
+                    stringResource(
+                        if (bloccato) R.string.messaggi_sblocca else R.string.messaggi_blocca,
+                    ),
+                )
+            }
+            if (archiviata) {
+                TextButton(onClick = onRipristina) {
+                    Text(stringResource(R.string.messaggi_ripristina))
+                }
+            } else {
+                TextButton(onClick = onArchivia) {
+                    Text(stringResource(R.string.messaggi_archivia))
+                }
+            }
+        }
+
         LazyColumn(modifier = Modifier.weight(1f).fillMaxWidth()) {
-            items(messaggi) { messaggio ->
-                Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)) {
+            items(conversazione.messaggi) { messaggio ->
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                ) {
                     Text(
                         text = if (messaggio.inviato) {
                             stringResource(R.string.messaggi_tu)
@@ -446,6 +665,23 @@ private fun ConversazioneAperta(
                 }
             }
         }
+
+        if (risposteRapide.isNotEmpty()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                risposteRapide.forEach { rapida ->
+                    TextButton(onClick = { risposta = rapida }) {
+                        Text(rapida, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                }
+            }
+        }
+
         Row(
             modifier = Modifier.fillMaxWidth().padding(8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -469,12 +705,18 @@ private fun ConversazioneAperta(
 }
 
 @Composable
-private fun SchermataImpostazioni(impostazioni: Impostazioni) {
+private fun SchermataImpostazioni(
+    impostazioni: Impostazioni,
+    risposteRapide: RisposteRapide,
+    onAggiungiRispostaRapida: (String) -> Unit,
+    onRimuoviRispostaRapida: (String) -> Unit,
+) {
     var testo by remember { mutableStateOf(impostazioni.testoSms) }
     var tetto by remember { mutableStateOf(impostazioni.tettoGiornaliero.toString()) }
+    var nuovaRisposta by remember { mutableStateOf("") }
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
+        modifier = Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(
@@ -503,6 +745,43 @@ private fun SchermataImpostazioni(impostazioni: Impostazioni) {
             label = { Text(stringResource(R.string.impostazioni_tetto)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         )
+
+        Text(
+            text = stringResource(R.string.impostazioni_risposte_rapide),
+            style = MaterialTheme.typography.headlineSmall,
+        )
+        if (risposteRapide.elenco.isEmpty()) {
+            Text(stringResource(R.string.impostazioni_risposte_vuote))
+        } else {
+            risposteRapide.elenco.forEach { risposta ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(risposta, modifier = Modifier.weight(1f))
+                    TextButton(onClick = { onRimuoviRispostaRapida(risposta) }) {
+                        Text(stringResource(R.string.impostazioni_rimuovi))
+                    }
+                }
+            }
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            OutlinedTextField(
+                value = nuovaRisposta,
+                onValueChange = { nuovaRisposta = it },
+                modifier = Modifier.weight(1f),
+                placeholder = { Text(stringResource(R.string.impostazioni_nuova_risposta)) },
+            )
+            Button(
+                onClick = {
+                    if (nuovaRisposta.isNotBlank()) {
+                        onAggiungiRispostaRapida(nuovaRisposta)
+                        nuovaRisposta = ""
+                    }
+                },
+            ) { Text(stringResource(R.string.impostazioni_aggiungi)) }
+        }
     }
 }
 

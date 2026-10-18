@@ -1,5 +1,6 @@
 package it.spamsaver
 
+import it.spamsaver.dominio.Messaggio
 import it.spamsaver.dominio.NumeroTelefono
 import it.spamsaver.dominio.Respinto
 import java.time.Instant

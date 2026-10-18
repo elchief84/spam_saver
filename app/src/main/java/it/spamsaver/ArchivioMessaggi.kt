@@ -1,29 +1,20 @@
 package it.spamsaver
 
 import android.content.Context
+import it.spamsaver.dominio.Messaggio
 import it.spamsaver.dominio.NumeroTelefono
 import it.spamsaver.dominio.Respinto
 import java.io.File
 import java.time.Instant
 import java.util.Base64
 
-/** Un messaggio scambiato con [numero]: ricevuto o inviato da Spam Saver. */
-data class Messaggio(
-    val numero: NumeroTelefono,
-    val testo: String,
-    val quando: Instant,
-    val inviato: Boolean,
-)
-
-/** I messaggi di un numero, in ordine di arrivo. */
-data class Conversazione(val numero: NumeroTelefono, val messaggi: List<Messaggio>)
-
 /**
  * Le conversazioni lette e scritte dentro Spam Saver, nel magazzino privato
  * dell'app. Il testo è codificato in Base64 per stare su una riga sola: la
  * messaggistica non è un formato a colonne.
  *
- * Tutto locale: nessun backend, nessuna sincronizzazione (ADR-0003).
+ * Tutto locale: nessun backend, nessuna sincronizzazione (ADR-0003). Il modello
+ * e le regole sui messaggi vivono nel dominio; qui c'è solo il file.
  */
 class ArchivioMessaggi(context: Context) {
 
@@ -67,12 +58,6 @@ class ArchivioMessaggi(context: Context) {
         const val INVIATO = "U"
     }
 }
-
-/** Raggruppa i messaggi per numero, i più recenti per primi. */
-fun conversazioniDi(messaggi: List<Messaggio>): List<Conversazione> =
-    messaggi.groupBy { it.numero }
-        .map { (numero, elenco) -> Conversazione(numero, elenco.sortedBy { it.quando }) }
-        .sortedByDescending { it.messaggi.last().quando }
 
 /**
  * L'ultima **risposta** ricevuta da ciascun numero respinto, indicizzata per
