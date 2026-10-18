@@ -5,6 +5,8 @@
 
     <string name="onboarding_perche_chiamate">Per decidere se una chiamata deve squillare, Android deve dare a Spam Saver il ruolo di screening delle chiamate (Caller ID &amp; spam): senza, l\'app non può respingere gli sconosciuti. I numeri restano sul telefono: nessun dato esce da qui.</string>
     <string name="onboarding_chiedi_ruolo_chiamate">Chiedi il ruolo di screening delle chiamate</string>
+    <string name="onboarding_ruolo_chiamate_non_disponibile">Questo telefono non offre il ruolo di screening delle chiamate («Caller ID &amp; spam»), quindi Spam Saver non può respingere gli sconosciuti. Puoi provare ad attivarlo a mano dalle impostazioni del telefono (App → Accesso speciale → Caller ID e spam). Puoi comunque proseguire con il resto dell\'onboarding.</string>
+    <string name="onboarding_continua">Continua</string>
 
     <string name="onboarding_perche_rubrica">Per far passare chi è in rubrica, Spam Saver deve poter leggere i contatti.</string>
     <string name="onboarding_chiedi_rubrica">Consenti la lettura della rubrica</string>
