@@ -2,10 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!--
-        Nessun permesso e nessun ruolo di sistema: lo scheletro si apre su una
-        schermata vuota. Permessi e ruoli arrivano insieme alle funzioni che li
-        richiedono (onboarding, screening delle chiamate, client SMS).
+        La lettura della rubrica serve a far passare i numeri conosciuti; il
+        ruolo di screening delle chiamate lo chiede l'onboarding. Il ruolo di
+        gestore SMS predefinito arriva col ticket che manda l'SMS.
     -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+
     <application
         android:allowBackup="false"
         android:label="@string/app_name"
@@ -20,6 +22,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!--
+            Il servizio che Android consulta per ogni chiamata in arrivo: esiste
+            solo se l'app tiene il ruolo di screening delle chiamate.
+        -->
+        <service
+            android:name=".RifiutoChiamateService"
+            android:exported="true"
+            android:permission="android.permission.BIND_SCREENING_SERVICE">
+            <intent-filter>
+                <action android:name="android.telecom.CallScreeningService" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>
