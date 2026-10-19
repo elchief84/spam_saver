@@ -77,4 +77,26 @@ class RichiestaRuoloTest {
 
         assertEquals(EsitoRitornoRuolo.Concesso, esitoAlRitorno(adattatore))
     }
+
+    @Test
+    fun `la richiesta SMS che non concede il ruolo offre il messaggio e le vie d'uscita`() {
+        // Il caso del Mi 9: la richiesta si apre, ma al ritorno il ruolo non c'è.
+        val adattatore = FintoAdattatoreRuoli(disponibile = true, ottenuto = false)
+
+        chiediRuolo(adattatore)
+
+        assertEquals(
+            listOf(ViaDUscitaRuolo.AppPredefinite, ViaDUscitaRuolo.Prosegui),
+            vieDUscitaRuoloSms(adattatore),
+        )
+    }
+
+    @Test
+    fun `la richiesta SMS che concede il ruolo non chiede vie d'uscita`() {
+        val adattatore = FintoAdattatoreRuoli(disponibile = true, ottenuto = true)
+
+        chiediRuolo(adattatore)
+
+        assertEquals(emptyList<ViaDUscitaRuolo>(), vieDUscitaRuoloSms(adattatore))
+    }
 }
