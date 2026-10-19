@@ -15,6 +15,9 @@
     <string name="onboarding_perche_sms">Per chiedere «chi sei?» a chi chiama da sconosciuto, Spam Saver deve diventare il gestore SMS predefinito: solo così può mandare l\'SMS di identificazione e leggere le risposte.</string>
     <string name="onboarding_costo_sms">Attenzione: l\'SMS di identificazione lo paghi tu. Parte una volta sola per ogni numero sconosciuto, e il tetto giornaliero lo tiene sotto controllo.</string>
     <string name="onboarding_chiedi_ruolo_sms">Chiedi il ruolo di gestore SMS predefinito</string>
+    <string name="onboarding_ruolo_sms_non_disponibile">Questo telefono non offre il ruolo di gestore SMS predefinito, quindi Spam Saver non può mandare l\'SMS di identificazione né leggere le risposte. Puoi provare ad assegnarlo a mano dalla schermata di sistema «App predefinite». Puoi comunque proseguire con il resto dell\'onboarding.</string>
+    <string name="onboarding_ruolo_sms_non_concesso">Il ruolo di gestore SMS predefinito non è stato concesso. Senza, Spam Saver non può mandare l\'SMS di identificazione né leggere le risposte. Puoi provare ad assegnarlo a mano dalla schermata di sistema «App predefinite». Puoi comunque proseguire con il resto dell\'onboarding.</string>
+    <string name="onboarding_apri_app_predefinite">Apri «App predefinite»</string>
 
     <string name="onboarding_perche_permesso_sms">Ultimo passo: senza il permesso di inviare SMS l\'app non può scrivere a chi chiama.</string>
     <string name="onboarding_chiedi_permesso_sms">Consenti l\'invio degli SMS</string>
