@@ -87,6 +87,32 @@ fun esitoAlRitorno(adattatore: AdattatoreRuoli): EsitoRitornoRuolo =
         EsitoRitornoRuolo.NonConcesso
     }
 
+/** Cosa offrire quando il ruolo di screening delle chiamate non è dell'app. */
+enum class RipiegoRuolo {
+
+    /**
+     * Offre di aprire le impostazioni di sistema delle app predefinite, dove si
+     * assegna il ruolo di «Caller ID e spam». Un'azione che apre la schermata
+     * giusta non dipende dal percorso a mano — «App → Accesso speciale → Caller ID
+     * e spam» — che su alcuni telefoni, come il Mi 9 con MIUI, non esiste.
+     */
+    ApriAppPredefinite,
+}
+
+/**
+ * Decide come proseguire quando il ruolo di screening non è stato concesso.
+ *
+ * È pura: niente Android, niente schermo. Se il ruolo è dell'app non c'è niente
+ * da offrire; se non lo è — il caso del Mi 9, dove la richiesta si apre ma il
+ * ruolo resta «None» — il ripiego è [RipiegoRuolo.ApriAppPredefinite], l'azione
+ * che apre le app predefinite, invece di un percorso a mano che su quel telefono
+ * non esiste.
+ */
+fun ripiegoRuolo(esito: EsitoRitornoRuolo): RipiegoRuolo? = when (esito) {
+    EsitoRitornoRuolo.Concesso -> null
+    EsitoRitornoRuolo.NonConcesso -> RipiegoRuolo.ApriAppPredefinite
+}
+
 /**
  * Una via d'uscita dal passo che chiede un ruolo di sistema, quando la richiesta
  * non ha concesso il ruolo.

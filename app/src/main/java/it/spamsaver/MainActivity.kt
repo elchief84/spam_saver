@@ -47,10 +47,10 @@ import it.spamsaver.dominio.Bloccati
 import it.spamsaver.dominio.Conversazione
 import it.spamsaver.dominio.ConversazioniArchiviate
 import it.spamsaver.dominio.EsitoRichiestaRuolo
-import it.spamsaver.dominio.EsitoRitornoRuolo
 import it.spamsaver.dominio.Messaggio
 import it.spamsaver.dominio.NumeroTelefono
 import it.spamsaver.dominio.Respinto
+import it.spamsaver.dominio.RipiegoRuolo
 import it.spamsaver.dominio.RisposteRapide
 import it.spamsaver.dominio.cerca
 import it.spamsaver.dominio.chiediRuolo
@@ -58,6 +58,7 @@ import it.spamsaver.dominio.conversazioniArchiviate
 import it.spamsaver.dominio.conversazioniDi
 import it.spamsaver.dominio.elencoPrincipale
 import it.spamsaver.dominio.esitoAlRitorno
+import it.spamsaver.dominio.ripiegoRuolo
 import it.spamsaver.dominio.vieDUscitaRuoloSms
 import java.time.Instant
 import java.time.ZoneId
@@ -89,7 +90,7 @@ class MainActivity : ComponentActivity() {
     private val risposteRapide = mutableStateOf(RisposteRapide())
     private val ruoloChiamate = mutableStateOf(false)
     private val ruoloChiamateNonDisponibile = mutableStateOf(false)
-    private val ruoloChiamateNonConcesso = mutableStateOf(false)
+    private val ruoloChiamateRipiego = mutableStateOf<RipiegoRuolo?>(null)
     private val richiestaRuoloChiamateAperta = mutableStateOf(false)
     private val saltatoRuoloChiamate = mutableStateOf(false)
     private val rubrica = mutableStateOf(false)
@@ -133,7 +134,7 @@ class MainActivity : ComponentActivity() {
                         Onboarding(
                             passo = passoOnboarding(),
                             ruoloChiamateNonDisponibile = ruoloChiamateNonDisponibile.value,
-                            ruoloChiamateNonConcesso = ruoloChiamateNonConcesso.value,
+                            ruoloChiamateRipiego = ruoloChiamateRipiego.value,
                             onChiediRuoloChiamate = ::chiediRuoloChiamate,
                             onContinuaSenzaRuoloChiamate = ::continuaSenzaRuoloChiamate,
                             onChiediRubrica = ::chiediRubrica,
@@ -246,9 +247,7 @@ class MainActivity : ComponentActivity() {
         if (!richiestaRuoloChiamateAperta.value) return
         richiestaRuoloChiamateAperta.value = false
         val esito = esitoAlRitorno(AdattatoreRuoliDiSistema(this, RoleManager.ROLE_CALL_SCREENING))
-        if (esito == EsitoRitornoRuolo.NonConcesso) {
-            ruoloChiamateNonConcesso.value = true
-        }
+        ruoloChiamateRipiego.value = ripiegoRuolo(esito)
     }
 
     private fun chiediRuoloSms() {
@@ -268,6 +267,9 @@ class MainActivity : ComponentActivity() {
             vieDUscitaRuoloSms(AdattatoreRuoliDiSistema(this, RoleManager.ROLE_SMS)).isNotEmpty()
     }
 
+    // Apre la schermata di sistema delle app predefinite: da lì si assegna a mano
+    // il ruolo di «Caller ID e spam» (e il gestore SMS), come sul Mi 9, dove il
+    // percorso «App → Accesso speciale → Caller ID e spam» non esiste.
     private fun apriAppPredefinite() {
         try {
             startActivity(Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS))
@@ -324,7 +326,7 @@ class MainActivity : ComponentActivity() {
 private fun Onboarding(
     passo: Passo,
     ruoloChiamateNonDisponibile: Boolean,
-    ruoloChiamateNonConcesso: Boolean,
+    ruoloChiamateRipiego: RipiegoRuolo?,
     onChiediRuoloChiamate: () -> Unit,
     onContinuaSenzaRuoloChiamate: () -> Unit,
     onChiediRubrica: () -> Unit,
@@ -352,11 +354,16 @@ private fun Onboarding(
                 // di restare fermi su un pulsante che non fa niente.
                 val avviso = when {
                     ruoloChiamateNonDisponibile -> R.string.onboarding_ruolo_chiamate_non_disponibile
-                    ruoloChiamateNonConcesso -> R.string.onboarding_ruolo_chiamate_non_concesso
+                    ruoloChiamateRipiego != null -> R.string.onboarding_ruolo_chiamate_non_concesso
                     else -> null
                 }
                 if (avviso != null) {
                     Text(stringResource(avviso))
+                    if (ruoloChiamateRipiego == RipiegoRuolo.ApriAppPredefinite) {
+                        Button(onClick = onApriAppPredefinite) {
+                            Text(stringResource(R.string.onboarding_apri_app_predefinite))
+                        }
+                    }
                     Button(onClick = onContinuaSenzaRuoloChiamate) {
                         Text(stringResource(R.string.onboarding_continua))
                     }

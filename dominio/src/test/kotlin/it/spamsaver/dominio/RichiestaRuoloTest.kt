@@ -1,6 +1,7 @@
 package it.spamsaver.dominio
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class RichiestaRuoloTest {
@@ -76,6 +77,27 @@ class RichiestaRuoloTest {
         chiediRuolo(adattatore)
 
         assertEquals(EsitoRitornoRuolo.Concesso, esitoAlRitorno(adattatore))
+    }
+
+    @Test
+    fun `il ruolo non concesso ripiega sulle app predefinite`() {
+        // Il caso del Mi 9: la richiesta si apre, ma al ritorno il ruolo non c'è.
+        // Il percorso a mano «App → Accesso speciale → Caller ID e spam» non
+        // esiste: il ripiego è l'azione che apre le app predefinite.
+        val adattatore = FintoAdattatoreRuoli(disponibile = true, ottenuto = false)
+
+        chiediRuolo(adattatore)
+
+        assertEquals(RipiegoRuolo.ApriAppPredefinite, ripiegoRuolo(esitoAlRitorno(adattatore)))
+    }
+
+    @Test
+    fun `il ruolo concesso non chiede nessun ripiego`() {
+        val adattatore = FintoAdattatoreRuoli(disponibile = true, ottenuto = true)
+
+        chiediRuolo(adattatore)
+
+        assertNull(ripiegoRuolo(esitoAlRitorno(adattatore)))
     }
 
     @Test

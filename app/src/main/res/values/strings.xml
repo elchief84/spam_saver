@@ -5,8 +5,9 @@
 
     <string name="onboarding_perche_chiamate">Per decidere se una chiamata deve squillare, Android deve dare a Spam Saver il ruolo di screening delle chiamate (Caller ID &amp; spam): senza, l\'app non può respingere gli sconosciuti. I numeri restano sul telefono: nessun dato esce da qui.</string>
     <string name="onboarding_chiedi_ruolo_chiamate">Chiedi il ruolo di screening delle chiamate</string>
-    <string name="onboarding_ruolo_chiamate_non_disponibile">Questo telefono non offre il ruolo di screening delle chiamate («Caller ID &amp; spam»), quindi Spam Saver non può respingere gli sconosciuti. Puoi provare ad attivarlo a mano dalle impostazioni del telefono (App → Accesso speciale → Caller ID e spam). Puoi comunque proseguire con il resto dell\'onboarding.</string>
-    <string name="onboarding_ruolo_chiamate_non_concesso">Il ruolo di screening delle chiamate («Caller ID &amp; spam») non è stato concesso. Senza, Spam Saver non può respingere gli sconosciuti. Puoi provare ad attivarlo a mano dalle impostazioni del telefono (App → Accesso speciale → Caller ID e spam). Puoi comunque proseguire con il resto dell\'onboarding.</string>
+    <string name="onboarding_ruolo_chiamate_non_disponibile">Questo telefono non offre il ruolo di screening delle chiamate («Caller ID &amp; spam»), quindi Spam Saver non può respingere gli sconosciuti. Puoi provare ad attivarlo a mano dalle impostazioni del telefono (Impostazioni → App predefinite → ID chiamante e spam). Puoi comunque proseguire con il resto dell\'onboarding.</string>
+    <string name="onboarding_ruolo_chiamate_non_concesso">Il ruolo di screening delle chiamate («Caller ID &amp; spam») non è stato concesso. Senza, Spam Saver non può respingere gli sconosciuti. Puoi assegnarlo dalle impostazioni del telefono (Impostazioni → App predefinite → ID chiamante e spam): tocca «Apri le app predefinite». Puoi comunque proseguire con il resto dell\'onboarding.</string>
+    <string name="onboarding_apri_app_predefinite">Apri le app predefinite</string>
     <string name="onboarding_continua">Continua</string>
 
     <string name="onboarding_perche_rubrica">Per far passare chi è in rubrica, Spam Saver deve poter leggere i contatti.</string>
@@ -17,7 +18,6 @@
     <string name="onboarding_chiedi_ruolo_sms">Chiedi il ruolo di gestore SMS predefinito</string>
     <string name="onboarding_ruolo_sms_non_disponibile">Questo telefono non offre il ruolo di gestore SMS predefinito, quindi Spam Saver non può mandare l\'SMS di identificazione né leggere le risposte. Puoi provare ad assegnarlo a mano dalla schermata di sistema «App predefinite». Puoi comunque proseguire con il resto dell\'onboarding.</string>
     <string name="onboarding_ruolo_sms_non_concesso">Il ruolo di gestore SMS predefinito non è stato concesso. Senza, Spam Saver non può mandare l\'SMS di identificazione né leggere le risposte. Puoi provare ad assegnarlo a mano dalla schermata di sistema «App predefinite». Puoi comunque proseguire con il resto dell\'onboarding.</string>
-    <string name="onboarding_apri_app_predefinite">Apri «App predefinite»</string>
 
     <string name="onboarding_perche_permesso_sms">Ultimo passo: senza il permesso di inviare SMS l\'app non può scrivere a chi chiama.</string>
     <string name="onboarding_chiedi_permesso_sms">Consenti l\'invio degli SMS</string>
