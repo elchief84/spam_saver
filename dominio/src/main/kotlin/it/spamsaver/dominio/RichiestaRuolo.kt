@@ -86,3 +86,36 @@ fun esitoAlRitorno(adattatore: AdattatoreRuoli): EsitoRitornoRuolo =
     } else {
         EsitoRitornoRuolo.NonConcesso
     }
+
+/**
+ * Una via d'uscita dal passo che chiede un ruolo di sistema, quando la richiesta
+ * non ha concesso il ruolo.
+ */
+enum class ViaDUscitaRuolo {
+
+    /** Proseguire con il resto dell'onboarding, senza il ruolo. */
+    Prosegui,
+
+    /**
+     * Aprire la schermata di sistema «App predefinite», dove il gestore SMS si
+     * assegna a mano.
+     */
+    AppPredefinite,
+}
+
+/**
+ * Decide le vie d'uscita del passo «gestore SMS predefinito» quando la richiesta
+ * non ha concesso il ruolo.
+ *
+ * È pura: si appoggia a [esitoAlRitorno] per sapere se il ruolo è ora dell'app.
+ * Sul Mi 9 la richiesta del ruolo SMS si apre e poi non concede mai il ruolo,
+ * come per lo screening delle chiamate: il passo deve dirlo e offrire di
+ * proseguire o di aprire «App predefinite», invece di restare muto. Quando il
+ * ruolo c'è non serve nessuna uscita.
+ */
+fun vieDUscitaRuoloSms(adattatore: AdattatoreRuoli): List<ViaDUscitaRuolo> =
+    when (esitoAlRitorno(adattatore)) {
+        EsitoRitornoRuolo.Concesso -> emptyList()
+        EsitoRitornoRuolo.NonConcesso ->
+            listOf(ViaDUscitaRuolo.AppPredefinite, ViaDUscitaRuolo.Prosegui)
+    }
