@@ -2,6 +2,7 @@ package it.spamsaver
 
 import android.Manifest
 import android.app.role.RoleManager
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -58,6 +59,7 @@ import it.spamsaver.dominio.conversazioniDi
 import it.spamsaver.dominio.elencoPrincipale
 import it.spamsaver.dominio.esitoAlRitorno
 import it.spamsaver.dominio.ripiegoRuolo
+import it.spamsaver.dominio.vieDUscitaRuoloSms
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -93,6 +95,10 @@ class MainActivity : ComponentActivity() {
     private val saltatoRuoloChiamate = mutableStateOf(false)
     private val rubrica = mutableStateOf(false)
     private val ruoloSms = mutableStateOf(false)
+    private val ruoloSmsNonDisponibile = mutableStateOf(false)
+    private val ruoloSmsNonConcesso = mutableStateOf(false)
+    private val richiestaRuoloSmsAperta = mutableStateOf(false)
+    private val saltatoRuoloSms = mutableStateOf(false)
     private val permessoSms = mutableStateOf(false)
     private val permessoNotifiche = mutableStateOf(true)
     private val tettoRaggiunto = mutableStateOf(false)
@@ -130,10 +136,13 @@ class MainActivity : ComponentActivity() {
                             ruoloChiamateNonDisponibile = ruoloChiamateNonDisponibile.value,
                             ruoloChiamateRipiego = ruoloChiamateRipiego.value,
                             onChiediRuoloChiamate = ::chiediRuoloChiamate,
-                            onApriAppPredefinite = ::apriAppPredefinite,
                             onContinuaSenzaRuoloChiamate = ::continuaSenzaRuoloChiamate,
                             onChiediRubrica = ::chiediRubrica,
+                            ruoloSmsNonDisponibile = ruoloSmsNonDisponibile.value,
+                            ruoloSmsNonConcesso = ruoloSmsNonConcesso.value,
                             onChiediRuoloSms = ::chiediRuoloSms,
+                            onApriAppPredefinite = ::apriAppPredefinite,
+                            onContinuaSenzaRuoloSms = ::continuaSenzaRuoloSms,
                             onChiediPermessoSms = ::chiediPermessoSms,
                             onChiediNotifiche = ::chiediNotifiche,
                         )
@@ -147,6 +156,7 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         aggiorna()
         valutaRitornoRichiestaRuoloChiamate()
+        valutaRitornoRichiestaRuoloSms()
     }
 
     private fun aggiorna() {
@@ -208,7 +218,7 @@ class MainActivity : ComponentActivity() {
     private fun passoOnboarding(): Passo = when {
         !ruoloChiamate.value && !saltatoRuoloChiamate.value -> Passo.Chiamate
         !rubrica.value -> Passo.Rubrica
-        !ruoloSms.value -> Passo.Sms
+        !ruoloSms.value && !saltatoRuoloSms.value -> Passo.Sms
         !permessoSms.value -> Passo.PermessoSms
         !permessoNotifiche.value -> Passo.Notifiche
         else -> Passo.Fatto
@@ -240,17 +250,36 @@ class MainActivity : ComponentActivity() {
         ruoloChiamateRipiego.value = ripiegoRuolo(esito)
     }
 
-    // Il ripiego apre la schermata di sistema delle app predefinite: da lì si
-    // assegna a mano il ruolo di «Caller ID e spam», come sul Mi 9, dove il
-    // percorso «App → Accesso speciale → Caller ID e spam» non esiste.
-    private fun apriAppPredefinite() {
-        startActivity(Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS))
+    private fun chiediRuoloSms() {
+        val esito = chiediRuolo(AdattatoreRuoliDiSistema(this, RoleManager.ROLE_SMS))
+        when (esito) {
+            EsitoRichiestaRuolo.Aperta -> richiestaRuoloSmsAperta.value = true
+            EsitoRichiestaRuolo.NonDisponibile -> ruoloSmsNonDisponibile.value = true
+        }
     }
 
-    // Il ruolo SMS non è oggetto di questo lavoro: resta la richiesta di prima.
-    private fun chiediRuoloSms() {
-        val gestoreRuoli = getSystemService(RoleManager::class.java) ?: return
-        startActivity(gestoreRuoli.createRequestRoleIntent(RoleManager.ROLE_SMS))
+    // Come per lo screening: al ritorno dalla richiesta il ruolo può non esserci —
+    // la schermata non è comparsa o si è annullata. La decisione è pura: qui si applica.
+    private fun valutaRitornoRichiestaRuoloSms() {
+        if (!richiestaRuoloSmsAperta.value) return
+        richiestaRuoloSmsAperta.value = false
+        ruoloSmsNonConcesso.value =
+            vieDUscitaRuoloSms(AdattatoreRuoliDiSistema(this, RoleManager.ROLE_SMS)).isNotEmpty()
+    }
+
+    // Apre la schermata di sistema delle app predefinite: da lì si assegna a mano
+    // il ruolo di «Caller ID e spam» (e il gestore SMS), come sul Mi 9, dove il
+    // percorso «App → Accesso speciale → Caller ID e spam» non esiste.
+    private fun apriAppPredefinite() {
+        try {
+            startActivity(Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS))
+        } catch (e: ActivityNotFoundException) {
+            // Nessuna schermata di sistema: resta la via d'uscita «Continua».
+        }
+    }
+
+    private fun continuaSenzaRuoloSms() {
+        saltatoRuoloSms.value = true
     }
 
     private fun continuaSenzaRuoloChiamate() {
@@ -299,10 +328,13 @@ private fun Onboarding(
     ruoloChiamateNonDisponibile: Boolean,
     ruoloChiamateRipiego: RipiegoRuolo?,
     onChiediRuoloChiamate: () -> Unit,
-    onApriAppPredefinite: () -> Unit,
     onContinuaSenzaRuoloChiamate: () -> Unit,
     onChiediRubrica: () -> Unit,
+    ruoloSmsNonDisponibile: Boolean,
+    ruoloSmsNonConcesso: Boolean,
     onChiediRuoloSms: () -> Unit,
+    onApriAppPredefinite: () -> Unit,
+    onContinuaSenzaRuoloSms: () -> Unit,
     onChiediPermessoSms: () -> Unit,
     onChiediNotifiche: () -> Unit,
 ) {
@@ -353,8 +385,26 @@ private fun Onboarding(
                 Text(stringResource(R.string.onboarding_perche_sms))
                 // Il costo si dice prima del pulsante: l'utente decide sapendolo.
                 Text(stringResource(R.string.onboarding_costo_sms))
-                Button(onClick = onChiediRuoloSms) {
-                    Text(stringResource(R.string.onboarding_chiedi_ruolo_sms))
+                // Il ruolo non c'è, perché il telefono non lo offre o perché la
+                // richiesta non l'ha concesso: dirlo e offrire le vie d'uscita —
+                // proseguire o aprire «App predefinite» — invece di restare fermi.
+                val avviso = when {
+                    ruoloSmsNonDisponibile -> R.string.onboarding_ruolo_sms_non_disponibile
+                    ruoloSmsNonConcesso -> R.string.onboarding_ruolo_sms_non_concesso
+                    else -> null
+                }
+                if (avviso != null) {
+                    Text(stringResource(avviso))
+                    Button(onClick = onApriAppPredefinite) {
+                        Text(stringResource(R.string.onboarding_apri_app_predefinite))
+                    }
+                    Button(onClick = onContinuaSenzaRuoloSms) {
+                        Text(stringResource(R.string.onboarding_continua))
+                    }
+                } else {
+                    Button(onClick = onChiediRuoloSms) {
+                        Text(stringResource(R.string.onboarding_chiedi_ruolo_sms))
+                    }
                 }
             }
 
