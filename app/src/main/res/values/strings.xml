@@ -50,6 +50,8 @@
     <string name="messaggi_archivio_vuoto">Nessuna conversazione archiviata.</string>
     <string name="messaggi_blocca">Blocca mittente</string>
     <string name="messaggi_sblocca">Sblocca mittente</string>
+    <string name="messaggi_blocco_spiegato">Bloccare il mittente non cambia le chiamate: i suoi SMS arrivano qui, ma non ti avviso.</string>
+    <string name="messaggi_blocco_attivo">Mittente bloccato: i suoi SMS arrivano qui senza avviso.</string>
     <string name="messaggi_archivia">Archivia</string>
     <string name="messaggi_ripristina">Ripristina</string>
 
