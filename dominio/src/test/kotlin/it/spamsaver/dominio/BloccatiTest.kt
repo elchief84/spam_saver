@@ -1,6 +1,7 @@
 package it.spamsaver.dominio
 
 import java.time.Instant
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -45,5 +46,13 @@ class BloccatiTest {
         val altro = numero("0612345678")
 
         assertTrue(deveNotificare(messaggio, Bloccati().blocca(altro)))
+    }
+
+    @Test
+    fun `il messaggio di un mittente bloccato resta nella conversazione`() {
+        val bloccati = Bloccati().blocca(luca)
+
+        assertFalse(deveNotificare(messaggio, bloccati))
+        assertEquals(listOf(messaggio), conversazioniDi(listOf(messaggio)).single().messaggi)
     }
 }
