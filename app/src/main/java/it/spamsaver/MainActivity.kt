@@ -654,11 +654,26 @@ private fun ElencoRicerca(
 
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         items(trovati) { trovato ->
-            RigaConversazione(
-                numero = trovato.conversazione.numero,
-                anteprima = trovato.messaggi.last().testo,
-                onClick = { onApri(trovato.conversazione.numero) },
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onApri(trovato.conversazione.numero) }
+                    .padding(16.dp),
+            ) {
+                Text(
+                    text = trovato.conversazione.numero.canonico,
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                // La ricerca mostra tutti i messaggi che contengono il testo, non solo l'ultimo.
+                trovato.messaggi.forEach { messaggio ->
+                    Text(
+                        text = messaggio.testo,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+            }
         }
     }
 }
@@ -762,6 +777,14 @@ private fun ConversazioneAperta(
                 }
             }
         }
+
+        Text(
+            text = stringResource(
+                if (bloccato) R.string.messaggi_blocco_attivo else R.string.messaggi_blocco_spiegato,
+            ),
+            modifier = Modifier.padding(horizontal = 16.dp),
+            style = MaterialTheme.typography.labelSmall,
+        )
 
         LazyColumn(modifier = Modifier.weight(1f).fillMaxWidth()) {
             items(conversazione.messaggi) { messaggio ->
